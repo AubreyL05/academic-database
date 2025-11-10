@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Delete Enrollment</h2>
+
+<form method="post" style="text-align:center; margin-top:20px;">
+  <input type="number" 
+         name="enrollment_id" 
+         placeholder="Enter Enrollment ID to Delete"
+         required
+         style="padding:8px; width:260px; border-radius:6px; border:1px solid #aaa;">
+  <br><br>
+  <button type="submit" class="clear-btn delete-btn">Delete Enrollment</button>
+  <a href="/enrollments" class="clear-btn">Cancel</a>
+</form>
+{% endblock %}

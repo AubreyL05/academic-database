@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Sections</h2>
+
+<!-- Search Bar -->
+<form method="get" action="/sections" style="text-align:center; margin-bottom:15px;">
+  <input type="text" name="search" 
+         placeholder="Search for section by code or instructor."
+         value="{{ search }}" 
+         style="padding: 8px; width: 280px; border-radius: 6px; border: 1px solid #aaa;">
+  <button type="submit" class="clear-btn" style="margin-left:5px;">Search</button>
+</form>
+
+<!-- Buttons -->
+<div style="text-align:center; margin-bottom:15px;">
+  <a href="/add_section" class="clear-btn">Add Section</a>
+  <a href="/delete_section" class="clear-btn">Delete Section</a>
+  <a href="/sections" class="clear-btn">Clear Filters</a>
+</div>
+
+<table class="styled-table">
+  <thead>
+    <tr>
+      {% for col, label in {
+        'section_id': 'ID',
+        'course_code': 'Course Code',
+        'section_code': 'Section Code',
+        'term': 'Term',
+        'year': 'Year',
+        'days': 'Days',
+        'time': 'Time',
+        'location': 'Location',
+        'instructor': 'Instructor'
+      }.items() %}
+        {% set next_order = 'asc' %}
+        {% if sort == col and order == 'asc' %}
+          {% set next_order = 'desc' %}
+          {% set arrow = '▲' %}
+        {% elif sort == col and order == 'desc' %}
+          {% set next_order = 'asc' %}
+          {% set arrow = '▼' %}
+        {% else %}
+          {% set arrow = '' %}
+        {% endif %}
+        <th>
+          <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+            {{ label }} <span>{{ arrow }}</span>
+          </a>
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sections %}
+    <tr>
+      <td>{{ s.section_id }}</td>
+      <td>{{ s.course_code }}</td>
+      <td>{{ s.section_code }}</td>
+      <td>{{ s.term }}</td>
+      <td>{{ s.year }}</td>
+      <td>{{ s.days }}</td>
+      <td>{{ s.time }}</td>
+      <td>{{ s.location }}</td>
+      <td>{{ s.instructor }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

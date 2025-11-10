@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Delete Student</h2>
+
+<form method="POST" style="width: 400px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+  <label>Enter Student ID to Delete:</label><br>
+  <input type="number" name="student_id" required style="width: 100%; padding: 8px; margin-top: 8px;"><br><br>
+
+  <p style="color: darkred; font-size: 0.9em;">
+    Warning: This will permanently delete the student and their enrollment records.
+  </p>
+
+  <button type="submit" class="clear-btn">Delete Student</button>
+  <a href="/students" class="clear-btn" style="background-color: #777;">Cancel</a>
+</form>
+{% endblock %}

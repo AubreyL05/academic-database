@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Enrollment</h2>
+
+<form method="post" style="max-width:400px; margin:auto; text-align:left;">
+  <label>Student ID:</label><br>
+  <input type="number" name="student_id" required><br><br>
+
+  <label>Section ID:</label><br>
+  <input type="number" name="section_id" required><br><br>
+
+  <label>Grade (optional):</label><br>
+  <input type="text" name="grade" placeholder="A, B+, C, etc."><br><br>
+
+  <div style="text-align:center;">
+    <button type="submit" class="clear-btn submit-btn">Add Enrollment</button>
+    <a href="/enrollments" class="clear-btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}

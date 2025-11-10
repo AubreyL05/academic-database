@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Academic Database</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Title -->
+  <h1>Academic Database</h1>
+
+  <!--Navigation Bar-->
+<nav>
+  <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+  <a href="/students" class="{{ 'active' if request.path.startswith('/students') else '' }}">Students</a>
+  <a href="/instructors" class="{{ 'active' if request.path.startswith('/instructors') else '' }}">Instructors</a>
+  <a href="/courses" class="{{ 'active' if request.path.startswith('/courses') else '' }}">Courses</a>
+  <a href="/departments" class="{{ 'active' if request.path.startswith('/departments') else '' }}">Departments</a>
+  <a href="/sections" class="{{ 'active' if request.path.startswith('/sections') else '' }}">Sections</a>
+  <a href="/enrollments" class="{{ 'active' if request.path.startswith('/enrollments') else '' }}">Enrollments</a>
+</nav>
+
+  <!-- Page Content -->
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+</html>

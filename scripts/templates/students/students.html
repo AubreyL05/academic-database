@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Students</h2>
+
+<!-- Search Bar -->
+<form method="get" action="/students" style="text-align:center; margin-bottom:15px;">
+  <input type="text" name="search" 
+         placeholder="Search for student by name or email."
+         value="{{ search }}" 
+         style="padding: 8px; width: 280px; border-radius: 6px; border: 1px solid #aaa;">
+  <button type="submit" class="clear-btn" style="margin-left:5px;">Search</button>
+</form>
+
+
+<!-- Buttons -->
+<div style="text-align:center; margin-bottom:15px;">
+  <a href="/add_student" class="clear-btn">Add Student</a>
+  <a href="/delete_student" class="clear-btn">Delete Student</a>
+  <a href="/students" class="clear-btn">Clear Filters</a>
+</div>
+
+<table class="styled-table">
+  <thead>
+    <tr>
+      {% for col, label in {
+        'student_id': 'ID',
+        'first_name': 'First Name',
+        'last_name': 'Last Name',
+        'email': 'Email',
+        'major': 'Major',
+        'date_of_birth': 'Date of Birth'
+      }.items() %}
+        {% set next_order = 'asc' %}
+        {% if sort == col and order == 'asc' %}
+          {% set next_order = 'desc' %}
+          {% set arrow = '▲' %}
+        {% elif sort == col and order == 'desc' %}
+          {% set next_order = 'asc' %}
+          {% set arrow = '▼' %}
+        {% else %}
+          {% set arrow = '' %}
+        {% endif %}
+        <th>
+          <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+            {{ label }} <span>{{ arrow }}</span>
+          </a>
+        </th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in students %}
+    <tr>
+      <td>{{ s.student_id }}</td>
+      <td>{{ s.first_name }}</td>
+      <td>{{ s.last_name }}</td>
+      <td>{{ s.email }}</td>
+      <td>{{ s.major }}</td>
+      <td>{{ s.date_of_birth }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

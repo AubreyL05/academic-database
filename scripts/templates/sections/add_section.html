@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Section</h2>
+
+<form method="post" style="max-width:400px; margin:auto; text-align:left;">
+  <label>Course ID:</label><br>
+  <input type="number" name="course_id" required><br><br>
+
+  <label>Instructor ID:</label><br>
+  <input type="number" name="instructor_id" required><br><br>
+
+  <label>Section Code:</label><br>
+  <input type="text" name="section_code" required><br><br>
+
+  <label>Term:</label><br>
+  <input type="text" name="term" required><br><br>
+
+  <label>Year:</label><br>
+  <input type="number" name="year" required><br><br>
+
+  <label>Days:</label><br>
+  <input type="text" name="days" placeholder="e.g. Mon/Wed/Fri" required><br><br>
+
+  <label>Time:</label><br>
+  <input type="text" name="time" placeholder="e.g. 10:00-11:15" required><br><br>
+
+  <label>Location:</label><br>
+  <input type="text" name="location" required><br><br>
+
+  <label>Capacity:</label><br>
+  <input type="number" name="capacity" min="1" required><br><br>
+
+  <div style="text-align:center;">
+    <button type="submit" class="clear-btn submit-btn">Add Section</button>
+    <a href="/sections" class="clear-btn">Cancel</a>
+  </div>
+</form>
+{% endblock %}

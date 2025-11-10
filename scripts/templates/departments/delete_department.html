@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Delete Department</h2>
+<form method="post" style="text-align:center;">
+  <input type="number" name="department_id" placeholder="Department ID" required><br><br>
+  <button type="submit" class="clear-btn delete-btn">Delete</button>
+  <a href="/departments" class="clear-btn">Cancel</a>
+</form>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Add Department</h2>
+<form method="post" style="text-align:center;">
+  <input type="text" name="department_name" placeholder="Department Name" required><br><br>
+  <input type="text" name="office_location" placeholder="Office Location" required><br><br>
+  <button type="submit" class="clear-btn">Add Department</button>
+  <a href="/departments" class="clear-btn">Cancel</a>
+</form>
+{% endblock %}
