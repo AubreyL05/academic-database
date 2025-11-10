@@ -4,8 +4,7 @@
 <form method="post" style="text-align:center;">
   <input type="text" name="first_name" placeholder="First Name" required><br><br>
   <input type="text" name="last_name" placeholder="Last Name" required><br><br>
-  <input type="email" name="email" placeholder="Email" required><br><br>
-  <input type="number" name="department_id" placeholder="Department ID" required><br><br>
+  <input type="number" name="department_id" placeholder="Department ID" required min="1" max="5">
   <button type="submit" class="clear-btn">Add Instructor</button>
   <a href="/instructors" class="clear-btn">Cancel</a>
 </form>

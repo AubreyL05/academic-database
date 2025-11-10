@@ -98,7 +98,7 @@ def add_student():
             first_name = request.form['first_name']
             last_name = request.form['last_name']
             email = f"{first_name.lower()}.{last_name.lower()}{get_length("student") + 1}@louisville.com"
-            major = request.form.get('myDropdown')
+            major = request.form.get('major')
             dob = request.form['date_of_birth']
 
             cursor = db.cursor()
@@ -185,8 +185,8 @@ def add_instructor():
         try:
             first = request.form['first_name']
             last = request.form['last_name']
-            email = request.form['email']
             dept = request.form['department_id']
+            email = f"{first.lower()}.{last.lower()}{dept}@louisville.com"
 
             cursor = db.cursor()
             cursor.execute("""
@@ -217,8 +217,8 @@ def delete_instructor():
 
             # Nullify department chairs who reference this instructor
             cursor.execute("UPDATE department SET chair_id = NULL WHERE chair_id = %s", (instructor_id,))
-            # Remove section references
-            cursor.execute("DELETE FROM section WHERE instructor_id = %s", (instructor_id,))
+            # Nullify instructor_id section references
+            cursor.execute("UPDATE section set instructor_id = NULL WHERE instructor_id = %s", (instructor_id,))
             # Delete instructor
             cursor.execute("DELETE FROM instructor WHERE instructor_id = %s", (instructor_id,))
 
