@@ -1,25 +1,10 @@
-import os
-from dotenv import load_dotenv
 from faker import Faker
-import mysql.connector
 import random
+import db_manager
 
 fake = Faker()
-load_dotenv()
 
-# Access database credentials
-db_host = os.getenv("DB_HOST")
-db_user = os.getenv("DB_USER")
-db_password = os.getenv("DB_PASSWORD")
-db_name = os.getenv("DB_NAME")
-
-# Connect to MySQL database
-db = mysql.connector.connect(
-    host = db_host,
-    user = db_user,
-    password = db_password,
-    database = db_name
-)
+db = db_manager.get_db()
 cursor = db.cursor()
 
 # Check for if database is already populated

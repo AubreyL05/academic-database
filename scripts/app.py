@@ -1,32 +1,10 @@
-import os
-from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect
-import mysql.connector
 import traceback
+import db_manager
 
 app = Flask(__name__)
-load_dotenv()
 
-# Access database credentials
-db_host = os.getenv("DB_HOST")
-db_user = os.getenv("DB_USER")
-db_password = os.getenv("DB_PASSWORD")
-db_name = os.getenv("DB_NAME")
-
-# Connect to DB (your own login) MAKE SURE YOU POPULATE WITH GENERATE_DATA.PY
-def get_db():
-    try:
-        db = mysql.connector.connect(
-            host = db_host,
-            user = db_user,
-            password = db_password,
-            database = db_name
-        )
-        return db
-    except Exception as e:
-        print("Database connection failed:")
-        traceback.print_exc()
-        return None
+db_manager.get_db()
 
 # Home sweet home
 @app.route('/')
@@ -57,7 +35,7 @@ def students():
     if order not in ['asc', 'desc']:
         order = 'asc'
 
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -89,7 +67,7 @@ def students():
 
 @app.route('/add_student', methods=['GET', 'POST'])
 def add_student():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -97,7 +75,7 @@ def add_student():
         try:
             first_name = request.form['first_name']
             last_name = request.form['last_name']
-            email = f"{first_name.lower()}.{last_name.lower()}{get_length("student") + 1}@louisville.com"
+            email = f"{first_name.lower()}.{last_name.lower()}{db_manager.get_length("student") + 1}@louisville.com"
             major = request.form.get('major')
             dob = request.form['date_of_birth']
 
@@ -120,7 +98,7 @@ def add_student():
 
 @app.route('/delete_student', methods=['GET', 'POST'])
 def delete_student():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -152,7 +130,7 @@ def instructors():
     if sort not in valid_sorts:
         sort = 'instructor_id'
 
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     try:
@@ -177,7 +155,7 @@ def instructors():
 
 @app.route('/add_instructor', methods=['GET', 'POST'])
 def add_instructor():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -206,7 +184,7 @@ def add_instructor():
 
 @app.route('/delete_instructor', methods=['GET', 'POST'])
 def delete_instructor():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -244,7 +222,7 @@ def courses():
     if sort not in valid_sorts:
         sort = 'course_id'
 
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     try:
@@ -267,7 +245,7 @@ def courses():
 
 @app.route('/add_course', methods=['GET', 'POST'])
 def add_course():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -296,7 +274,7 @@ def add_course():
 
 @app.route('/delete_course', methods=['GET', 'POST'])
 def delete_course():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -323,7 +301,7 @@ def departments():
     sort = request.args.get('sort', 'department_id')
     order = request.args.get('order', 'asc')
     search = request.args.get('search', '')
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     try:
@@ -347,7 +325,7 @@ def departments():
 
 @app.route('/add_department', methods=['GET', 'POST'])
 def add_department():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -374,7 +352,7 @@ def add_department():
 
 @app.route('/delete_department', methods=['GET', 'POST'])
 def delete_department():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
 
@@ -405,7 +383,7 @@ def sections():
     sort = request.args.get('sort', 'section_id')
     order = request.args.get('order', 'asc')
     search = request.args.get('search', '')
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     try:
@@ -432,7 +410,7 @@ def sections():
 
 @app.route('/add_section', methods=['GET', 'POST'])
 def add_section():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     if request.method == 'POST':
@@ -464,7 +442,7 @@ def add_section():
 
 @app.route('/delete_section', methods=['GET', 'POST'])
 def delete_section():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     if request.method == 'POST':
@@ -489,7 +467,7 @@ def enrollments():
     sort = request.args.get('sort', 'enrollment_id')
     order = request.args.get('order', 'asc')
     search = request.args.get('search', '')
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     try:
@@ -517,7 +495,7 @@ def enrollments():
 
 @app.route('/add_enrollment', methods=['GET', 'POST'])
 def add_enrollment():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     if request.method == 'POST':
@@ -542,7 +520,7 @@ def add_enrollment():
 
 @app.route('/delete_enrollment', methods=['GET', 'POST'])
 def delete_enrollment():
-    db = get_db()
+    db = db_manager.get_db()
     if not db:
         return "<h2>Could not connect to database.</h2>", 500
     if request.method == 'POST':
@@ -559,23 +537,6 @@ def delete_enrollment():
             traceback.print_exc()
             return "<h2>Database deletion failed.</h2>", 500
     return render_template("enrollments/delete_enrollment.html")
-
-def get_length(table: str):
-    db = get_db()
-
-    try:
-        cursor = db.cursor()
-
-        query = f"SELECT COUNT(*) FROM {table}" 
-        cursor.execute(query)
-        
-        result = cursor.fetchone()
-        count = result[0] if result else 0
-        cursor.close()
-        return count
-    finally:
-        if db and db.is_connected():
-            db.close()
 
 # RUN FLASK SERVER 
 if __name__ == '__main__':
