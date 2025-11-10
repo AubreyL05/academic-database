@@ -97,8 +97,8 @@ def add_student():
         try:
             first_name = request.form['first_name']
             last_name = request.form['last_name']
-            email = request.form['email']
-            major = request.form['major']
+            email = f"{first_name.lower()}.{last_name.lower()}{get_length("student") + 1}@louisville.com"
+            major = request.form.get('myDropdown')
             dob = request.form['date_of_birth']
 
             cursor = db.cursor()
@@ -559,6 +559,23 @@ def delete_enrollment():
             traceback.print_exc()
             return "<h2>Database deletion failed.</h2>", 500
     return render_template("enrollments/delete_enrollment.html")
+
+def get_length(table: str):
+    db = get_db()
+
+    try:
+        cursor = db.cursor()
+
+        query = f"SELECT COUNT(*) FROM {table}" 
+        cursor.execute(query)
+        
+        result = cursor.fetchone()
+        count = result[0] if result else 0
+        cursor.close()
+        return count
+    finally:
+        if db and db.is_connected():
+            db.close()
 
 # RUN FLASK SERVER 
 if __name__ == '__main__':
