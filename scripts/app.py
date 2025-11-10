@@ -218,7 +218,7 @@ def delete_instructor():
             # Nullify department chairs who reference this instructor
             cursor.execute("UPDATE department SET chair_id = NULL WHERE chair_id = %s", (instructor_id,))
             # Nullify instructor_id section references
-            cursor.execute("UPDATE section set instructor_id = NULL WHERE instructor_id = %s", (instructor_id,))
+            cursor.execute("UPDATE section SET instructor_id = NULL WHERE instructor_id = %s", (instructor_id,))
             # Delete instructor
             cursor.execute("DELETE FROM instructor WHERE instructor_id = %s", (instructor_id,))
 
