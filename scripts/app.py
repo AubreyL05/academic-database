@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect
-import traceback
-import db_manager
+import traceback, db_manager, complex
 
 app = Flask(__name__)
 
@@ -537,6 +536,30 @@ def delete_enrollment():
             traceback.print_exc()
             return "<h2>Database deletion failed.</h2>", 500
     return render_template("enrollments/delete_enrollment.html")
+
+@app.route('/reports', methods=['GET', 'POST'])
+def reports():
+    busiest_sections = complex.get_highest_enrolled_sections() # Report 1
+    department_stats = complex.get_department_stats() # Report 2
+
+    student_major = [] # Report 3
+    selected_major = None
+
+    if request.method == "POST":
+        selected_major = request.form.get("major")
+        if selected_major:
+            student_major = complex.get_students_by_major(selected_major)
+
+    top_gpa_students = complex.get_top_students_by_gpa() # Report 4
+
+    return render_template(
+        "reports/reports.html",
+        busiest_sections=busiest_sections,
+        department_stats=department_stats,
+        student_major=student_major,
+        selected_major=selected_major,
+        top_gpa_students=top_gpa_students
+    )
 
 # RUN FLASK SERVER 
 if __name__ == '__main__':
