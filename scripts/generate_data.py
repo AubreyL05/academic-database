@@ -4,18 +4,16 @@ import db_manager
 
 fake = Faker()
 
+print("Ensuring tables are initialized...")
+db_manager.reset_tables()
+print("Tables are ready.")
+
 db = db_manager.get_db()
+if db is None:
+    print("Error: Could not connect to the database. Exiting.")
+    exit(1)
+
 cursor = db.cursor()
-
-# Check for if database is already populated
-cursor.execute("SELECT COUNT(*) FROM student;")
-
-# Fetch the single result.
-result = cursor.fetchone()
-studentCount = result[0]
-if (studentCount > 0):
-    print("Database is already populated! Terminating process...")
-    quit()
 
 # ------------------- Departments -------------------
 department_courses = {
