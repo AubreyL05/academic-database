@@ -18,44 +18,51 @@
   <a href="/instructors" class="clear-btn">Clear Filters</a>
 </div>
 
-<table class="styled-table">
-  <thead>
-    <tr>
-      {% for col, label in {
-        'instructor_id': 'ID',
-        'first_name': 'First Name',
-        'last_name': 'Last Name',
-        'email': 'Email',
-        'department_name': 'Department'
-      }.items() %}
-        {% set next_order = 'asc' %}
-        {% if sort == col and order == 'asc' %}
-          {% set next_order = 'desc' %}
-          {% set arrow = '▲' %}
-        {% elif sort == col and order == 'desc' %}
+<!-- Scrollable Table -->
+<div class="scrollable-table">
+  <table class="styled-table">
+    <thead>
+      <tr>
+        {% for col, label in {
+          'instructor_id': 'ID',
+          'first_name': 'First Name',
+          'last_name': 'Last Name',
+          'email': 'Email',
+          'department_name': 'Department'
+        }.items() %}
           {% set next_order = 'asc' %}
-          {% set arrow = '▼' %}
-        {% else %}
-          {% set arrow = '' %}
-        {% endif %}
-        <th>
-          <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
-            {{ label }} <span>{{ arrow }}</span>
-          </a>
-        </th>
+          {% if sort == col and order == 'asc' %}
+            {% set next_order = 'desc' %}
+            {% set arrow = '▲' %}
+          {% elif sort == col and order == 'desc' %}
+            {% set next_order = 'asc' %}
+            {% set arrow = '▼' %}
+          {% else %}
+            {% set arrow = '' %}
+          {% endif %}
+          <th>
+            <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+              {{ label }} <span>{{ arrow }}</span>
+            </a>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in instructors %}
+      <tr>
+        <td>{{ i.instructor_id }}</td>
+        <td>{{ i.first_name }}</td>
+        <td>{{ i.last_name }}</td>
+        <td>{{ i.email }}</td>
+        <td>{{ i.department_name }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align:center;">No instructors found.</td>
+      </tr>
       {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for i in instructors %}
-    <tr>
-      <td>{{ i.instructor_id }}</td>
-      <td>{{ i.first_name }}</td>
-      <td>{{ i.last_name }}</td>
-      <td>{{ i.email }}</td>
-      <td>{{ i.department_name }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>
 {% endblock %}

@@ -18,44 +18,37 @@
   <a href="/courses" class="clear-btn">Clear Filters</a>
 </div>
 
-<table class="styled-table">
-  <thead>
-    <tr>
-      {% for col, label in {
-        'course_id': 'ID',
-        'course_code': 'Code',
-        'course_name': 'Name',
-        'credits': 'Credits',
-        'department_name': 'Department'
-      }.items() %}
-        {% set next_order = 'asc' %}
-        {% if sort == col and order == 'asc' %}
-          {% set next_order = 'desc' %}
-          {% set arrow = '▲' %}
-        {% elif sort == col and order == 'desc' %}
-          {% set next_order = 'asc' %}
-          {% set arrow = '▼' %}
-        {% else %}
-          {% set arrow = '' %}
-        {% endif %}
-        <th>
-          <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
-            {{ label }} <span>{{ arrow }}</span>
-          </a>
-        </th>
+<!-- Scrollable Table -->
+<div class="scrollable-table">
+  <table class="styled-table">
+    <thead>
+      <tr>
+        {% for col, label in {
+          'course_id': 'ID',
+          'course_code': 'Code',
+          'course_name': 'Name',
+          'credits': 'Credits',
+          'department_name': 'Department'
+        }.items() %}
+          <th>{{ label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in courses %}
+      <tr>
+        <td>{{ c.course_id }}</td>
+        <td>{{ c.course_code }}</td>
+        <td>{{ c.course_name }}</td>
+        <td>{{ c.credits }}</td>
+        <td>{{ c.department_name }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align:center;">No courses found.</td>
+      </tr>
       {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% for c in courses %}
-    <tr>
-      <td>{{ c.course_id }}</td>
-      <td>{{ c.course_code }}</td>
-      <td>{{ c.course_name }}</td>
-      <td>{{ c.credits }}</td>
-      <td>{{ c.department_name }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>
 {% endblock %}
