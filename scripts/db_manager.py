@@ -20,6 +20,28 @@ def get_db():
         return db
     except Exception:
         return None
+    
+def fetch_all(query: str, params: tuple = None):
+    """Executes a SELECT query and returns all matching rows."""
+    db = get_db()
+    if db is None:
+        return None
+
+    try:
+        # Use buffered cursor to fetch all results immediately
+        cursor = db.cursor(buffered=True) 
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
+            
+        return cursor.fetchall()
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return None
+    finally:
+        if db and db.is_connected():
+            db.close()
 
 def get_length(table: str):
     db = get_db()
