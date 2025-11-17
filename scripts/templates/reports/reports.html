@@ -140,4 +140,59 @@
     </table>
 </div>
 
+<!-- Report 5: Student Transcript Lookup -->
+<h3 class="report-title">Find Student Transcript</h3>
+
+<div class="form-container">
+    <form method="POST" action="/reports" class="form-box">
+        <label for="student_id">Enter Student ID:</label>
+        <input type="number" name="student_id" id="student_id" required min="1">
+        <br><br>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+{% if student_transcripts %}
+    <p style="margin-top: 20px; text-align: center; font-weight: bold;">
+        Transcript for Student ID: {{ selected_student_id }}
+    </p>
+
+    <!-- Show cumulative GPA -->
+    <p style="text-align: center; margin-bottom: 10px;">
+        <strong>Cumulative GPA:</strong> {{ student_transcripts[0].cumulative_gpa }}
+    </p>
+
+    <div class="scrollable-table" style="max-width: 700px; margin: 0 auto;">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Credits</th>
+                    <th>Term</th>
+                    <th>Year</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in student_transcripts %}
+                <tr>
+                    <td>{{ row.course_code }}</td>
+                    <td>{{ row.course_name }}</td>
+                    <td>{{ row.credits }}</td>
+                    <td>{{ row.term }}</td>
+                    <td>{{ row.year }}</td>
+                    <td>{{ row.grade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% elif selected_student_id %}
+    <p style="text-align: center; margin-top: 20px;">
+        No transcript found for student ID {{ selected_student_id }}.
+    </p>
+{% endif %}
+
 {% endblock %}

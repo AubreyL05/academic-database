@@ -544,13 +544,20 @@ def reports():
 
     student_major = [] # Report 3
     selected_major = None
+    student_transcripts = []  # Report 5
+    selected_student_id = None
 
     if request.method == "POST":
         selected_major = request.form.get("major")
         if selected_major:
-            student_major = complex.get_students_by_major(selected_major)
+            student_major = complex.get_students_by_major(selected_major) # Report 3
 
-    top_gpa_students = complex.get_top_students_by_gpa() # Report 4
+        student_id = request.form.get("student_id")
+        if student_id:
+            selected_student_id = student_id
+            student_transcripts = complex.student_transcript(selected_student_id) # Report 5
+
+    top_gpa_students = complex.get_top_students_by_gpa()  # Report 4
 
     return render_template(
         "reports/reports.html",
@@ -558,7 +565,9 @@ def reports():
         department_stats=department_stats,
         student_major=student_major,
         selected_major=selected_major,
-        top_gpa_students=top_gpa_students
+        top_gpa_students=top_gpa_students,
+        student_transcripts=student_transcripts,
+        selected_student_id=selected_student_id
     )
 
 # RUN FLASK SERVER 

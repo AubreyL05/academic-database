@@ -159,3 +159,65 @@ def get_top_students_by_gpa(limit=10):
                 "gpa": round(row[4], 2)  # round to 2 decimal places
             })
     return students
+
+def student_transcript(student_id):
+    """
+    Returns transcript of student with sql and GPA with python using credits and grades
+    """
+    query = """
+    SELECT
+        c.course_code,
+        c.course_name,
+        c.credits,
+        s.term,
+        s.year,
+        e.grade
+    FROM enrollment e
+    JOIN section s ON s.section_id = e.section_id
+    JOIN course c ON c.course_id = s.course_id
+    WHERE e.student_id = %s
+    ORDER BY s.year, s.term;
+    """
+    results = db_manager.fetch_all(query, (student_id,))
+    
+    student_transcripts = []
+    total_points = 0.0
+    total_credits = 0.0
+
+    grade_points = {
+        'A': 4.0, 'A-': 3.7,
+        'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+        'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+        'D': 1.0, 'F': 0.0
+    }
+
+    if results:
+        for row in results:
+            course_code = row[0]
+            course_name = row[1]
+            credits = float(row[2])
+            term = row[3]
+            year = row[4]
+            grade = row[5]
+
+            points = grade_points.get(grade)
+            if points is not None:
+                total_points += points * credits
+                total_credits += credits
+
+            student_transcripts.append({
+                "course_code": course_code,
+                "course_name": course_name,
+                "credits": credits,
+                "term": term,
+                "year": year,
+                "grade": grade
+            })
+
+    cumulative_gpa = round(total_points / total_credits, 2) if total_credits > 0 else None
+
+    # Attach cumulative GPA to first row or all rows for template
+    for row in student_transcripts:
+        row["cumulative_gpa"] = cumulative_gpa
+
+    return student_transcripts
