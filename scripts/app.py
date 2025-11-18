@@ -359,13 +359,13 @@ def reports():
     top_gpa = complex.get_top_students_by_gpa()
 
     return render_template("reports/reports.html",
-                           busiest_sections=busiest,
-                           department_stats=dept_stats,
-                           student_major=majors,
-                           selected_major=selected_major,
-                           top_gpa_students=top_gpa,
-                           student_transcripts=transcripts,
-                           selected_student_id=selected_student)
+        busiest_sections=busiest,
+        department_stats=dept_stats,
+        student_major=majors,
+        selected_major=selected_major,
+        top_gpa_students=top_gpa,
+        student_transcripts=transcripts,
+        selected_student_id=selected_student)
 
 
 @app.route('/')
