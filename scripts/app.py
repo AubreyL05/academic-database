@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect
-import traceback
-import db_manager
-import complex
+from flask import Flask, render_template, request, redirect, flash, url_for
+from generate_data import main as generate_data_main
+import traceback, os
+import db_manager, complex
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
 
 def build_search_query(base_query, search_term, fields):
     if not search_term:
@@ -367,6 +368,11 @@ def reports():
         student_transcripts=transcripts,
         selected_student_id=selected_student)
 
+@app.route("/generate-data", methods=["POST"])
+def generate_data():
+    generate_data_main()  # call generate_data.py
+    flash("Database has been reset and populated successfully!")
+    return redirect(url_for("home"))  # redirect to main page
 
 @app.route('/')
 def home():
