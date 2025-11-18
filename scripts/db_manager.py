@@ -1,4 +1,3 @@
-# shortened, reusable DB helpers
 import mysql.connector
 from dotenv import load_dotenv
 import os
@@ -6,6 +5,7 @@ import os
 load_dotenv()
 
 def get_db():
+    """Establishes connection to database."""
     try:
         return mysql.connector.connect(
             host=os.getenv("DB_HOST"),
@@ -17,6 +17,7 @@ def get_db():
         return None
 
 def query_all(query, params=None, dict_mode=False):
+    """Executes a SELECT query and fetches all resulting rows."""
     db = get_db()
     if not db:
         return None
@@ -37,7 +38,7 @@ def query_dict(query, params=None):
     return query_all(query, params, dict_mode=True)
 
 def execute(query, params=None):
-    """Run a single modifying statement (INSERT/UPDATE/DELETE). Returns True on success."""
+    """Run a single modifying statement (INSERT/UPDATE/DELETE)."""
     db = get_db()
     if not db:
         return False
@@ -60,10 +61,7 @@ def execute(query, params=None):
             pass
 
 def execute_many(sql_list_with_params):
-    """
-    Execute a list of (sql, params) tuples in one DB transaction.
-    Returns True on success, False on failure.
-    """
+    """Execute a list of (sql, params) tuples in one DB transaction."""
     db = get_db()
     if not db:
         return False
@@ -87,6 +85,7 @@ def execute_many(sql_list_with_params):
             pass
 
 def reset_tables():
+    """Executes table schema, wiping all records."""
     commands = [
         "SET FOREIGN_KEY_CHECKS = 0",
         "DROP TABLE IF EXISTS enrollment",
