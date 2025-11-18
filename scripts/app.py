@@ -32,19 +32,40 @@ def students():
 
 @app.route('/add_student', methods=['GET', 'POST'])
 def add_student():
+    db = db_manager.get_db()
+    if not db:
+        return "<h2>Could not connect to database.</h2>", 500
+
     if request.method == 'POST':
-        first = request.form['first_name']
-        last = request.form['last_name']
-        major = request.form.get('major')
-        dob = request.form['date_of_birth']
+        try:
+            first = request.form['first_name']
+            last = request.form['last_name']
+            major = request.form.get('major')
+            dob = request.form['date_of_birth']
 
-        email = f"{first.lower()}.{last.lower()}{db_manager.get_length('student') + 1}@louisville.com"
+            cursor = db.cursor()
 
-        ok = db_manager.execute(
-            "INSERT INTO student (first_name, last_name, email, major, date_of_birth) VALUES (%s,%s,%s,%s,%s)",
-            (first, last, email, major, dob)
-        )
-        return redirect('/students') if ok else "<h2>Insert failed.</h2>"
+            # Step 1: Insert student with temporary email
+            cursor.execute("""
+                INSERT INTO student (first_name, last_name, email, major, date_of_birth)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (first, last, "temp@email.com", major, dob))
+
+            student_id = cursor.lastrowid
+
+            # Step 2: Update email to first.lastID@email.com
+            email = f"{first.lower()}.{last.lower()}{student_id}@louisville.com"
+            cursor.execute("UPDATE student SET email = %s WHERE student_id = %s", (email, student_id))
+
+            db.commit()
+            cursor.close()
+            db.close()
+
+            return redirect('/students')
+        except Exception:
+            db.rollback()
+            traceback.print_exc()
+            return "<h2>Database insertion failed.</h2>", 500
 
     return render_template("students/add_student.html")
 
