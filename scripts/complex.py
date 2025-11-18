@@ -23,18 +23,8 @@ def get_highest_enrolled_sections():
         enrollment_count DESC
     LIMIT 10;
     """
-    print("--- Top 10 Heavily Enrolled Sections ---")
-    results = db_manager.fetch_all(query)
-    if results:
-        # Print column headers manually for clarity
-        print(f"{'Course Code':<15}{'Course Name':<30}{'Section Code':<15}{'Enrollments':<10}")
-        print("-" * 70)
-        for row in results:
-            print(f"{row[0]:<15}{row[1]:<30}{row[2]:<15}{row[3]:<10}")
-    else:
-        print("No enrollment data found.")
         
-    results = db_manager.fetch_all(query)
+    results = db_manager.query_all(query)
     sections = []
     if results:
         for row in results:
@@ -66,17 +56,8 @@ def get_department_stats():
     ORDER BY 
         num_instructors DESC;
     """
-    print("\n--- Department Summary Statistics ---")
-    results = db_manager.fetch_all(query)
-    if results:
-        print(f"{'Department Name':<35}{'Instructors':<15}{'Courses':<10}")
-        print("-" * 60)
-        for row in results:
-            print(f"{row[0]:<35}{row[1]:<15}{row[2]:<10}")
-    else:
-        print("No department data found.")
         
-    results = db_manager.fetch_all(query)
+    results = db_manager.query_all(query)
     departments = []
     if results:
         for row in results:
@@ -101,15 +82,7 @@ def get_students_by_major(major_name: str):
     WHERE 
         major = %s;
     """
-    print(f"\n--- Students Enrolled in {major_name} ---")
-    results = db_manager.fetch_all(query, (major_name,))
-    if results:
-        print(f"{'First Name':<15}{'Last Name':<15}{'Email':<40}")
-        print("-" * 70)
-        for row in results:
-            print(f"{row[0]:<15}{row[1]:<15}{row[2]:<40}")
-    else:
-        print(f"No students found for major: {major_name}")
+    results = db_manager.query_all(query, (major_name,))
         
     return results
 
@@ -146,7 +119,7 @@ def get_top_students_by_gpa(limit=10):
     ORDER BY gpa DESC
     LIMIT %s;
     """
-    results = db_manager.fetch_all(query, (limit,))
+    results = db_manager.query_all(query, (limit,))
     
     students = []
     if results:
@@ -178,7 +151,7 @@ def student_transcript(student_id):
     WHERE e.student_id = %s
     ORDER BY s.year, s.term;
     """
-    results = db_manager.fetch_all(query, (student_id,))
+    results = db_manager.query_all(query, (student_id,))
     
     student_transcripts = []
     total_points = 0.0
