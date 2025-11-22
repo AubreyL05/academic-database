@@ -115,6 +115,7 @@ def reset_tables():
             last_name VARCHAR(50) NOT NULL,
             email VARCHAR(100) UNIQUE NOT NULL,
             FOREIGN KEY (department_id) REFERENCES department(department_id)
+                ON DELETE SET NULL
         )""",
         """CREATE TABLE course (
             course_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -123,6 +124,7 @@ def reset_tables():
             course_code VARCHAR(10) NOT NULL,
             credits INT NOT NULL,
             FOREIGN KEY (department_id) REFERENCES department(department_id)
+                ON DELETE CASCADE
         )""",
         """CREATE TABLE section (
             section_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -135,16 +137,21 @@ def reset_tables():
             days VARCHAR(50),
             capacity INT NOT NULL,
             location VARCHAR(50),
-            FOREIGN KEY (course_id) REFERENCES course(course_id),
+            FOREIGN KEY (course_id) REFERENCES course(course_id)
+                ON DELETE CASCADE,
             FOREIGN KEY (instructor_id) REFERENCES instructor(instructor_id)
+                ON DELETE SET NULL
         )""",
         """CREATE TABLE enrollment (
             enrollment_id INT PRIMARY KEY AUTO_INCREMENT,
             student_id INT NOT NULL,
             section_id INT NOT NULL,
             grade CHAR(2),
-            FOREIGN KEY (student_id) REFERENCES student(student_id),
+            FOREIGN KEY (student_id) REFERENCES student(student_id)
+                ON DELETE CASCADE,
             FOREIGN KEY (section_id) REFERENCES section(section_id)
+                ON DELETE CASCADE
+
         )""",
         "SET FOREIGN_KEY_CHECKS = 1"
     ]

@@ -178,8 +178,8 @@ def delete_course():
     if request.method == 'POST':
         cid = request.form['course_id']
 
-        ok = db_manager.execute("DELETE FROM section WHERE course_id=%s", (cid,)) and \
-             db_manager.execute("DELETE FROM course WHERE course_id=%s", (cid,))
+        ok = db_manager.execute("DELETE FROM course WHERE course_id=%s", (cid,))
+
 
         return redirect('/courses') if ok else "<h2>Delete failed.</h2>"
 
@@ -228,8 +228,7 @@ def delete_department():
     if request.method == 'POST':
         did = request.form['department_id']
 
-        ok = db_manager.execute("UPDATE instructor SET department_id=NULL WHERE department_id=%s", (did,)) and \
-             db_manager.execute("DELETE FROM department WHERE department_id=%s", (did,))
+        ok = db_manager.execute("DELETE FROM department WHERE department_id=%s", (did,))
 
         return redirect('/departments') if ok else "<h2>Delete failed.</h2>"
 
@@ -286,8 +285,7 @@ def delete_section():
     if request.method == 'POST':
         sid = request.form['section_id']
 
-        ok = db_manager.execute("DELETE FROM enrollment WHERE section_id=%s", (sid,)) and \
-             db_manager.execute("DELETE FROM section WHERE section_id=%s", (sid,))
+        ok = ok = db_manager.execute("DELETE FROM section WHERE section_id=%s", (sid,))
 
         return redirect('/sections') if ok else "<h2>Delete failed.</h2>"
     return render_template("sections/delete_section.html")
