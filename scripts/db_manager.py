@@ -124,7 +124,7 @@ def reset_tables():
             course_code VARCHAR(10) NOT NULL,
             credits INT NOT NULL,
             FOREIGN KEY (department_id) REFERENCES department(department_id)
-                ON DELETE CASCADE
+                ON DELETE SET NULL
         )""",
         """CREATE TABLE section (
             section_id INT PRIMARY KEY AUTO_INCREMENT,

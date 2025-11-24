@@ -129,7 +129,6 @@ def delete_instructor():
         iid = request.form['instructor_id']
 
         ok = db_manager.execute("UPDATE department SET chair_id=NULL WHERE chair_id=%s", (iid,)) \
-             and db_manager.execute("UPDATE section SET instructor_id=NULL WHERE instructor_id=%s", (iid,)) \
              and db_manager.execute("DELETE FROM instructor WHERE instructor_id=%s", (iid,))
 
         return redirect('/instructors') if ok else "<h2>Delete failed.</h2>"
@@ -178,12 +177,21 @@ def delete_course():
     if request.method == 'POST':
         cid = request.form['course_id']
 
-        ok = db_manager.execute("DELETE FROM course WHERE course_id=%s", (cid,))
-
+        # Delete enrollments for all sections of this course
+        ok = db_manager.execute("""
+            DELETE e FROM enrollment e
+            JOIN section s ON e.section_id = s.section_id
+            WHERE s.course_id=%s
+        """, (cid,)) and db_manager.execute(
+            "DELETE FROM section WHERE course_id=%s", (cid,)
+        ) and db_manager.execute(
+            "DELETE FROM course WHERE course_id=%s", (cid,)
+        )
 
         return redirect('/courses') if ok else "<h2>Delete failed.</h2>"
 
     return render_template("courses/delete_course.html")
+
 
 # -------------------------------
 # DEPARTMENTS
@@ -228,11 +236,18 @@ def delete_department():
     if request.method == 'POST':
         did = request.form['department_id']
 
-        ok = db_manager.execute("DELETE FROM department WHERE department_id=%s", (did,))
+        ok = db_manager.execute(
+            "UPDATE instructor SET department_id=NULL WHERE department_id=%s", (did,)
+        ) and db_manager.execute(
+            "UPDATE course SET department_id=NULL WHERE department_id=%s", (did,)
+        ) and db_manager.execute(
+            "DELETE FROM department WHERE department_id=%s", (did,)
+        )
 
         return redirect('/departments') if ok else "<h2>Delete failed.</h2>"
 
     return render_template("departments/delete_department.html")
+
 
 @app.route('/sections')
 def sections():
@@ -246,7 +261,7 @@ def sections():
                CONCAT(i.first_name,' ',i.last_name) AS instructor
         FROM section s
         JOIN course c ON s.course_id = c.course_id
-        JOIN instructor i ON s.instructor_id = i.instructor_id
+        LEFT JOIN instructor i ON s.instructor_id = i.instructor_id
         WHERE s.section_code LIKE %s OR c.course_code LIKE %s
               OR CONCAT(i.first_name,' ',i.last_name) LIKE %s
         ORDER BY {sort} {order}
@@ -285,10 +300,15 @@ def delete_section():
     if request.method == 'POST':
         sid = request.form['section_id']
 
-        ok = ok = db_manager.execute("DELETE FROM section WHERE section_id=%s", (sid,))
+        ok = db_manager.execute(
+            "DELETE FROM enrollment WHERE section_id=%s", (sid,)
+        ) and db_manager.execute(
+            "DELETE FROM section WHERE section_id=%s", (sid,)
+        )
 
         return redirect('/sections') if ok else "<h2>Delete failed.</h2>"
     return render_template("sections/delete_section.html")
+
 
 @app.route('/enrollments')
 def enrollments():
