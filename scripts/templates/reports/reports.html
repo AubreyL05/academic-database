@@ -14,7 +14,9 @@
             <tr>
                 <th>Department Name</th>
                 <th>Instructors</th>
-                <th>Courses Offered</th>
+                <th>Courses</th>
+                <th>Sections</th>
+                <th>Students</th>
             </tr>
         </thead>
         <tbody>
@@ -23,10 +25,12 @@
                 <td>{{ dept.department_name }}</td>
                 <td>{{ dept.num_instructors }}</td>
                 <td>{{ dept.num_courses }}</td>
+                <td>{{ dept.num_sections }}</td>
+                <td>{{ dept.num_students }}</td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="3" style="text-align: center;">No department statistics found.</td>
+                <td colspan="5" style="text-align: center;">No department statistics found.</td>
             </tr>
             {% endfor %}
         </tbody>

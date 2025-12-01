@@ -42,19 +42,18 @@ def get_department_stats():
     """
     query = """
     SELECT 
-        d.department_name, 
+        d.department_name,
         COUNT(DISTINCT i.instructor_id) AS num_instructors,
-        COUNT(DISTINCT c.course_id) AS num_courses
-    FROM 
-        department d
-    LEFT JOIN 
-        instructor i ON d.department_id = i.department_id
-    LEFT JOIN
-        course c ON d.department_id = c.department_id
-    GROUP BY 
-        d.department_name
-    ORDER BY 
-        num_instructors DESC;
+        COUNT(DISTINCT c.course_id) AS num_courses,
+        COUNT(DISTINCT sec.section_id) AS num_sections,
+        COUNT(DISTINCT s.student_id) AS num_students
+    FROM department d
+    LEFT JOIN instructor i ON d.department_id = i.department_id
+    LEFT JOIN course c ON d.department_id = c.department_id
+    LEFT JOIN section sec ON c.course_id = sec.course_id
+    LEFT JOIN student s ON s.major = d.department_name
+    GROUP BY d.department_name
+    ORDER BY num_instructors DESC;
     """
         
     results = db_manager.query_all(query)
@@ -64,7 +63,9 @@ def get_department_stats():
             departments.append({
                 "department_name": row[0],
                 "num_instructors": row[1],
-                "num_courses": row[2]
+                "num_courses": row[2],
+                "num_sections": row[3],
+                "num_students": row[4]
             })
     return departments
 
