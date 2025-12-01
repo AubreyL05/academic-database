@@ -6,6 +6,7 @@ This appendix includes the database schema, complex SQL queries wrapped in Pytho
 - [Complex Queries](#complex-queries)
 - [CRUD Operations](#crud-operations) *(Create, Read, Update, Delete)*
 - [DB Helper Functions](#db-helper-functions)
+- [HTML templates](#html-templates)
 
 ## Database Schema
 ```SQL
@@ -43,6 +44,7 @@ CREATE TABLE instructor (
     last_name VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     FOREIGN KEY (department_id) REFERENCES department(department_id)
+	ON DELETE SET NULL
 );
 
 CREATE TABLE course (
@@ -52,6 +54,7 @@ CREATE TABLE course (
     course_code VARCHAR(10) NOT NULL,
     credits INT NOT NULL,
     FOREIGN KEY (department_id) REFERENCES department(department_id)
+	ON DELETE CASCADE
 );
 
 CREATE TABLE section (
@@ -65,8 +68,10 @@ CREATE TABLE section (
     days VARCHAR(50),
     capacity INT NOT NULL,
     location VARCHAR(50),
-    FOREIGN KEY (course_id) REFERENCES course(course_id),
-    FOREIGN KEY (instructor_id) REFERENCES instructor(instructor_id)
+    FOREIGN KEY (course_id) REFERENCES course(course_id)
+	ON DELETE CASCADE,
+	FOREIGN KEY (instructor_id) REFERENCES instructor(instructor_id)
+	ON DELETE SET NULL
 );
 
 CREATE TABLE enrollment (
@@ -74,18 +79,18 @@ CREATE TABLE enrollment (
     student_id INT NOT NULL,
     section_id INT NOT NULL,
     grade CHAR(2),
-    FOREIGN KEY (student_id) REFERENCES student(student_id),
-    FOREIGN KEY (section_id) REFERENCES section(section_id)
+    FOREIGN KEY (student_id) REFERENCES student(student_id)
+	ON DELETE CASCADE,
+	FOREIGN KEY (section_id) REFERENCES section(section_id)
+	ON DELETE CASCADE
 );
 
 SET FOREIGN_KEY_CHECKS = 1;
 ```
 
 ## Complex Queries
+### Highest Enrolled Sections
 ```python
-import db_manager
-from pprint import pprint
-
 def get_highest_enrolled_sections():
     """
     Retrieves the course sections with the highest number of enrollments.
@@ -120,26 +125,28 @@ def get_highest_enrolled_sections():
                 "enrollment_count": row[3]
             })
     return sections
+```
 
+### Department Statistics
+```python
 def get_department_stats():
     """
     Calculates the total number of instructors and courses per department.
     """
     query = """
     SELECT 
-        d.department_name, 
+        d.department_name,
         COUNT(DISTINCT i.instructor_id) AS num_instructors,
-        COUNT(DISTINCT c.course_id) AS num_courses
-    FROM 
-        department d
-    LEFT JOIN 
-        instructor i ON d.department_id = i.department_id
-    LEFT JOIN
-        course c ON d.department_id = c.department_id
-    GROUP BY 
-        d.department_name
-    ORDER BY 
-        num_instructors DESC;
+        COUNT(DISTINCT c.course_id) AS num_courses,
+        COUNT(DISTINCT sec.section_id) AS num_sections,
+        COUNT(DISTINCT s.student_id) AS num_students
+    FROM department d
+    LEFT JOIN instructor i ON d.department_id = i.department_id
+    LEFT JOIN course c ON d.department_id = c.department_id
+    LEFT JOIN section sec ON c.course_id = sec.course_id
+    LEFT JOIN student s ON s.major = d.department_name
+    GROUP BY d.department_name
+    ORDER BY num_instructors DESC;
     """
         
     results = db_manager.query_all(query)
@@ -149,10 +156,15 @@ def get_department_stats():
             departments.append({
                 "department_name": row[0],
                 "num_instructors": row[1],
-                "num_courses": row[2]
+                "num_courses": row[2],
+                "num_sections": row[3],
+                "num_students": row[4]
             })
     return departments
+```
 
+### Find Students by Major
+```python
 def get_students_by_major(major_name: str):
     """
     Finds students enrolled in a specific major.
@@ -170,7 +182,10 @@ def get_students_by_major(major_name: str):
     results = db_manager.query_all(query, (major_name,))
         
     return results
+```
 
+### Top Students by GPA
+```python
 def get_top_students_by_gpa(limit=10):
     """
     Returns the top N students by GPA calculated from their enrollments.
@@ -217,7 +232,10 @@ def get_top_students_by_gpa(limit=10):
                 "gpa": round(row[4], 2)  # round to 2 decimal places
             })
     return students
+```
 
+### Retrieve Student Transcript
+```python
 def student_transcript(student_id):
     """
     Returns transcript of student with sql and GPA with python using credits and grades
@@ -284,29 +302,45 @@ def student_transcript(student_id):
 ## CRUD Operations
 ### Students
 ```python
-# Create
-student_id = db_manager.get_length("student") + 1
-email = f"john.doe{student_id}@louisville.com"
-db_manager.execute(
-    "INSERT INTO student (first_name, last_name, email, major, date_of_birth) VALUES (%s,%s,%s,%s,%s)",
-    ("John", "Doe", email, "CS", "2000-01-01")
-)
+# CREATE
+# Insert the student first with a temporary email, then update it so it stays unique.
+db = db_manager.get_db()
+cursor = db.cursor()
 
-# Read
+# Step 1: Insert with placeholder email
+cursor.execute("""
+    INSERT INTO student (first_name, last_name, email, major, date_of_birth)
+    VALUES (%s, %s, %s, %s, %s)
+""", ("John", "Doe", "temp@email.com", "CS", "2000-01-01"))
+
+student_id = cursor.lastrowid
+
+# Step 2: Create unique email: first.last<ID>@louisville.com
+email = f"john.doe{student_id}@louisville.com"
+cursor.execute("UPDATE student SET email=%s WHERE student_id=%s", (email, student_id))
+
+db.commit()
+cursor.close()
+db.close()
+
+# READ
 students = db_manager.query_dict("SELECT * FROM student ORDER BY student_id")
 
-# Update
+# UPDATE
 db_manager.execute("UPDATE student SET major=%s WHERE student_id=%s", ("Math", 1))
 
-# Update: Ensure email is unique
-email = f"{first.lower()}.{last.lower()}{student_id}@louisville.com"
+# UPDATE email (auto-generated format)
+new_email = f"{first.lower()}.{last.lower()}{student_id}@louisville.com"
 db_manager.execute(
     "UPDATE student SET email=%s WHERE student_id=%s",
-    (email, student_id)
+    (new_email, student_id)
 )
 
-# Delete
+# DELETE
+# Must delete enrollments first because of foreign key constraints.
+db_manager.execute("DELETE FROM enrollment WHERE student_id=%s", (1,))
 db_manager.execute("DELETE FROM student WHERE student_id=%s", (1,))
+
 ```
 
 ### Instructors
@@ -401,7 +435,7 @@ db_manager.execute("DELETE FROM enrollment WHERE enrollment_id=%s", (1,))
 ```
 
 ## DB Helper Functions
-`db_manager.py`
+### `db_manager.py`
 ```python
 import mysql.connector
 from dotenv import load_dotenv
@@ -489,3 +523,487 @@ def execute_many(sql_list_with_params):
         except Exception:
             pass
 ```
+
+## HTML Templates
+### `base.html`
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Academic Database</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <!-- Reset & Populate Database Button -->
+  <div class="top-left-button">
+      <form action="{{ url_for('generate_data') }}" method="post">
+          <button type="submit">Reset & Populate Database</button>
+      </form>
+  </div>
+  
+  <!-- Title -->
+  <h1>Academic Database</h1>
+
+  <!--Navigation Bar-->
+<nav>
+  <a href="/" class="{{ 'active' if request.path == '/' else '' }}">Home</a>
+  <a href="/students" class="{{ 'active' if request.path.startswith('/students') else '' }}">Students</a>
+  <a href="/instructors" class="{{ 'active' if request.path.startswith('/instructors') else '' }}">Instructors</a>
+  <a href="/courses" class="{{ 'active' if request.path.startswith('/courses') else '' }}">Courses</a>
+  <a href="/departments" class="{{ 'active' if request.path.startswith('/departments') else '' }}">Departments</a>
+  <a href="/sections" class="{{ 'active' if request.path.startswith('/sections') else '' }}">Sections</a>
+  <a href="/enrollments" class="{{ 'active' if request.path.startswith('/enrollments') else '' }}">Enrollments</a>
+  <a href="/reports" class="{{ 'active' if request.path.startswith('/reports') else '' }}">Reports</a>
+</nav>
+
+  <!-- Page Content -->
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</body>
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class="flash-messages">
+      {% for message in messages %}
+        <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+</html>
+```
+
+### Reports
+```html
+{% extends "base.html" %}
+
+{% block title %}Academic Reports Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="report-title" style="text-align:center; border-bottom:none;">Academic Reports Dashboard</h2>
+<p style="text-align: center; margin-bottom: 30px; color: #6b7280;">Insights generated from complex SQL queries.</p>
+
+<!-- Report 1: Department Summary Statistics -->
+<h3 class="report-title">Department Summary Statistics</h3>
+<div style="max-width: 800px; margin: auto;">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Department Name</th>
+                <th>Instructors</th>
+                <th>Courses</th>
+                <th>Sections</th>
+                <th>Students</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dept in department_stats %}
+            <tr>
+                <td>{{ dept.department_name }}</td>
+                <td>{{ dept.num_instructors }}</td>
+                <td>{{ dept.num_courses }}</td>
+                <td>{{ dept.num_sections }}</td>
+                <td>{{ dept.num_students }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No department statistics found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Report 2: Top 10 Heavily Enrolled Sections -->
+<h3 class="report-title">Top 10 Heavily Enrolled Sections</h3>
+<div style="max-width: 800px; margin: auto;">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Course Code</th>
+                <th>Course Name</th>
+                <th>Section Code</th>
+                <th>Enrollments</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for section in busiest_sections %}
+            <tr>
+                <td>{{ section.course_code }}</td>
+                <td>{{ section.course_name }}</td>
+                <td>{{ section.section_code }}</td>
+                <td>{{ section.enrollment_count }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center;">No enrollment data for reports found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Report 3: Search Students by Major -->
+<h3 class="report-title">Search Students by Major</h3>
+<div class="form-container">
+    <form method="POST" action="/reports" class="form-box">
+        <label for="major">Choose a major:</label>
+        <select name="major" id="major">
+            <option value="Bioengineering">Bioengineering</option>
+            <option value="Chemical Engineering">Chemical Engineering</option>
+            <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+            <option value="Electrical & Computer Engineering">Electrical & Computer Engineering</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+        </select>
+        <br><br>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+{% if student_major %}
+<p style="margin-top: 20px; margin-bottom: 10px; font-weight: bold; text-align: center;">
+    Students in {{ selected_major }}
+</p>
+<div class="scrollable-table" style="max-width: 600px; margin: 0 auto;">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in student_major %}
+            <tr>
+                <td>{{ student[0] }}</td>
+                <td>{{ student[1] }}</td>
+                <td>{{ student[2] }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" style="text-align: center;">No students found for this major.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Report 4: Top 10 Students by GPA -->
+<h3 class="report-title">Top 10 Students by GPA</h3>
+<div style="max-width: 700px; margin: auto;">
+    <table class="styled-table">
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Major</th>
+                <th>GPA</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in top_gpa_students %}
+            <tr>
+                <td>{{ student.id }}</td>
+                <td>{{ student.first_name }}</td>
+                <td>{{ student.last_name }}</td>
+                <td>{{ student.major }}</td>
+                <td>{{ student.gpa }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No student GPA data found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Report 5: Student Transcript Lookup -->
+<h3 class="report-title">Find Student Transcript For Current Semester</h3>
+
+<div class="form-container">
+    <form method="POST" action="/reports" class="form-box">
+        <label for="student_id">Enter Student ID:</label>
+        <input type="number" name="student_id" id="student_id" required min="1">
+        <br><br>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+{% if student_transcripts %}
+    <p style="margin-top: 20px; text-align: center; font-weight: bold;">
+        Transcript for Student ID: {{ selected_student_id }}
+    </p>
+
+    <!-- Show cumulative GPA -->
+    <p style="text-align: center; margin-bottom: 10px;">
+        <strong>Cumulative GPA:</strong> {{ student_transcripts[0].cumulative_gpa }}
+    </p>
+
+    <div class="scrollable-table" style="max-width: 700px; margin: 0 auto;">
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Name</th>
+                    <th>Credits</th>
+                    <th>Term</th>
+                    <th>Year</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in student_transcripts %}
+                <tr>
+                    <td>{{ row.course_code }}</td>
+                    <td>{{ row.course_name }}</td>
+                    <td>{{ row.credits }}</td>
+                    <td>{{ row.term }}</td>
+                    <td>{{ row.year }}</td>
+                    <td>{{ row.grade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% elif selected_student_id %}
+    <p style="text-align: center; margin-top: 20px;">
+        No transcript found for student ID {{ selected_student_id }}.
+    </p>
+{% endif %}
+
+{% endblock %}
+```
+
+### Students
+#### `students.html`
+```html
+{% extends "base.html" %}
+{% block content %}
+<h2>Students</h2>
+
+<!-- Search Bar -->
+<form method="get" action="/students" style="text-align:center; margin-bottom:15px;">
+  <input type="text" name="search" 
+         placeholder="Search for student by name or email."
+         value="{{ search }}" 
+         style="padding: 8px; width: 280px; border-radius: 6px; border: 1px solid #aaa;">
+  <button type="submit" class="clear-btn" style="margin-left:5px;">Search</button>
+</form>
+
+<!-- Buttons -->
+<div style="text-align:center; margin-bottom:15px;">
+  <a href="/add_student" class="clear-btn">Add Student</a>
+  <a href="/delete_student" class="clear-btn">Delete Student</a>
+  <a href="/students" class="clear-btn">Clear Filters</a>
+</div>
+
+<!-- Scrollable Table -->
+<div class="scrollable-table">
+  <table class="styled-table">
+    <thead>
+      <tr>
+        {% for col, label in {
+          'student_id': 'ID',
+          'first_name': 'First Name',
+          'last_name': 'Last Name',
+          'email': 'Email',
+          'major': 'Major',
+          'date_of_birth': 'Date of Birth'
+        }.items() %}
+          {% set next_order = 'asc' %}
+          {% if sort == col and order == 'asc' %}
+            {% set next_order = 'desc' %}
+            {% set arrow = '▲' %}
+          {% elif sort == col and order == 'desc' %}
+            {% set next_order = 'asc' %}
+            {% set arrow = '▼' %}
+          {% else %}
+            {% set arrow = '' %}
+          {% endif %}
+          <th>
+            <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+              {{ label }} <span>{{ arrow }}</span>
+            </a>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.student_id }}</td>
+        <td>{{ s.first_name }}</td>
+        <td>{{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.major }}</td>
+        <td>{{ s.date_of_birth }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">No students found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+```
+
+#### `delete_student.html`
+```html
+{% extends "base.html" %}
+{% block content %}
+<h2>Students</h2>
+
+<!-- Search Bar -->
+<form method="get" action="/students" style="text-align:center; margin-bottom:15px;">
+  <input type="text" name="search" 
+         placeholder="Search for student by name or email."
+         value="{{ search }}" 
+         style="padding: 8px; width: 280px; border-radius: 6px; border: 1px solid #aaa;">
+  <button type="submit" class="clear-btn" style="margin-left:5px;">Search</button>
+</form>
+
+<!-- Buttons -->
+<div style="text-align:center; margin-bottom:15px;">
+  <a href="/add_student" class="clear-btn">Add Student</a>
+  <a href="/delete_student" class="clear-btn">Delete Student</a>
+  <a href="/students" class="clear-btn">Clear Filters</a>
+</div>
+
+<!-- Scrollable Table -->
+<div class="scrollable-table">
+  <table class="styled-table">
+    <thead>
+      <tr>
+        {% for col, label in {
+          'student_id': 'ID',
+          'first_name': 'First Name',
+          'last_name': 'Last Name',
+          'email': 'Email',
+          'major': 'Major',
+          'date_of_birth': 'Date of Birth'
+        }.items() %}
+          {% set next_order = 'asc' %}
+          {% if sort == col and order == 'asc' %}
+            {% set next_order = 'desc' %}
+            {% set arrow = '▲' %}
+          {% elif sort == col and order == 'desc' %}
+            {% set next_order = 'asc' %}
+            {% set arrow = '▼' %}
+          {% else %}
+            {% set arrow = '' %}
+          {% endif %}
+          <th>
+            <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+              {{ label }} <span>{{ arrow }}</span>
+            </a>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.student_id }}</td>
+        <td>{{ s.first_name }}</td>
+        <td>{{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.major }}</td>
+        <td>{{ s.date_of_birth }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">No students found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+```
+
+#### `add_student.html`
+```html
+{% extends "base.html" %}
+{% block content %}
+<h2>Students</h2>
+
+<!-- Search Bar -->
+<form method="get" action="/students" style="text-align:center; margin-bottom:15px;">
+  <input type="text" name="search" 
+         placeholder="Search for student by name or email."
+         value="{{ search }}" 
+         style="padding: 8px; width: 280px; border-radius: 6px; border: 1px solid #aaa;">
+  <button type="submit" class="clear-btn" style="margin-left:5px;">Search</button>
+</form>
+
+<!-- Buttons -->
+<div style="text-align:center; margin-bottom:15px;">
+  <a href="/add_student" class="clear-btn">Add Student</a>
+  <a href="/delete_student" class="clear-btn">Delete Student</a>
+  <a href="/students" class="clear-btn">Clear Filters</a>
+</div>
+
+<!-- Scrollable Table -->
+<div class="scrollable-table">
+  <table class="styled-table">
+    <thead>
+      <tr>
+        {% for col, label in {
+          'student_id': 'ID',
+          'first_name': 'First Name',
+          'last_name': 'Last Name',
+          'email': 'Email',
+          'major': 'Major',
+          'date_of_birth': 'Date of Birth'
+        }.items() %}
+          {% set next_order = 'asc' %}
+          {% if sort == col and order == 'asc' %}
+            {% set next_order = 'desc' %}
+            {% set arrow = '▲' %}
+          {% elif sort == col and order == 'desc' %}
+            {% set next_order = 'asc' %}
+            {% set arrow = '▼' %}
+          {% else %}
+            {% set arrow = '' %}
+          {% endif %}
+          <th>
+            <a href="?sort={{ col }}&order={{ next_order }}{% if search %}&search={{ search }}{% endif %}" class="sortable">
+              {{ label }} <span>{{ arrow }}</span>
+            </a>
+          </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.student_id }}</td>
+        <td>{{ s.first_name }}</td>
+        <td>{{ s.last_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.major }}</td>
+        <td>{{ s.date_of_birth }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">No students found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+```
+
+### Other HTML Templates
+**Instructors, departments, courses, sections, enrollments are very simliar in structure to the student templates.
