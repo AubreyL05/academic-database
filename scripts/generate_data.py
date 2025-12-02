@@ -40,17 +40,32 @@ def main():
     db.commit()
 
     # ------------------- Instructors -------------------
+    name_counts = {} # track duplicates by (first, last)
     instructors = []
-    for dept_id in range(1, len(departments)+1):
-        for i in range(10):
+
+    for dept_id in range(1, len(departments) + 1):
+        for _ in range(10):
             first = fake.first_name()
             last = fake.last_name()
-            email = f"{first.lower()}.{last.lower()}{dept_id}@louisville.com"  # unique
+            key = (first, last)
+
+            # First occurrence 
+            if key not in name_counts:
+                name_counts[key] = 0
+                suffix = ""
+            else:
+                # Increment count and use as suffix for a new occurrence
+                name_counts[key] += 1
+                suffix = str(name_counts[key])
+
+            email = f"{first.lower()}.{last.lower()}{suffix}@louisville.com"
+
             instructors.append((first, last, email, dept_id))
+
     cursor.executemany(
         "INSERT INTO instructor (first_name, last_name, email, department_id) VALUES (%s,%s,%s,%s)",
         instructors
-        )
+    )
     db.commit()
 
     # Get instructor IDs to assign chairs
@@ -67,13 +82,28 @@ def main():
     # ------------------- Students -------------------
     student_majors = [d[0] for d in departments]
 
+    name_counts = {}
     students = []
-    for i in range(1250):
+
+    for _ in range(1250):
         first = fake.first_name()
         last = fake.last_name()
-        email = f"{first.lower()}.{last.lower()}{i + 1}@louisville.com"  # unique
+        key = (first, last)
+
+        # increment the count 
+        if key not in name_counts:
+            name_counts[key] = 1
+        else:
+            name_counts[key] += 1
+
+        # format suffix as digits 01, incrementing each time the same FN & LN occurs (like a UofL email)
+        suffix = f"{name_counts[key]:02d}"
+
+        email = f"{first.lower()}.{last.lower()}{suffix}@louisville.com"
+
         major = random.choice(student_majors)
         dob = fake.date_of_birth(minimum_age=18, maximum_age=25)
+
         students.append((first, last, email, major, dob))
 
     cursor.executemany(
