@@ -39,28 +39,30 @@ def add_student():
 
     if request.method == 'POST':
         try:
-            first = request.form['first_name']
-            last = request.form['last_name']
+            first = request.form['first_name'].strip()
+            last = request.form['last_name'].strip()
             major = request.form.get('major')
             dob = request.form['date_of_birth']
-
+            
             cursor = db.cursor()
 
-            # Step 1: Insert student with temporary email
+            # Count existing students with the same name
+            cursor.execute("SELECT COUNT(*) FROM student WHERE first_name = %s AND last_name = %s", (first, last))
+            
+            existing_count = cursor.fetchone()[0]
+            new_suffix_num = existing_count + 1
+            suffix = f"{new_suffix_num:02d}"
+            
+            email = f"{first.lower()}.{last.lower()}{suffix}@louisville.com"
+            
+            # 3. Insert the new student with the correctly generated email in one go
             cursor.execute("""
                 INSERT INTO student (first_name, last_name, email, major, date_of_birth)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (first, last, "temp@email.com", major, dob))
-
-            student_id = cursor.lastrowid
-
-            # Step 2: Update email to first.lastID@email.com
-            email = f"{first.lower()}.{last.lower()}{student_id}@louisville.com"
-            cursor.execute("UPDATE student SET email = %s WHERE student_id = %s", (email, student_id))
+            """, (first, last, email, major, dob))
 
             db.commit()
             cursor.close()
-            db.close()
 
             return redirect('/students')
         except Exception:
@@ -111,7 +113,7 @@ def add_instructor():
         first = request.form['first_name']
         last = request.form['last_name']
         dept = request.form['department_id']
-        email = f"{first.lower()}.{last.lower()}{dept}@louisville.com"
+        email = f"{first.lower()}.{last.lower()}@louisville.com"
 
         ok = db_manager.execute("""
             INSERT INTO instructor (first_name, last_name, email, department_id)
