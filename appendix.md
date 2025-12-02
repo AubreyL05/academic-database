@@ -1006,4 +1006,4 @@ def execute_many(sql_list_with_params):
 ```
 
 ### Other HTML Templates
-**Instructors, departments, courses, sections, enrollments are very simliar in structure to the student templates.
+**Instructors, departments, courses, sections, enrollments are very simliar in structure to the student templates.**
